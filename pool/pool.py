@@ -16,6 +16,54 @@ def filter_instances(project):
 
 
 @click.group()
+def cli():
+	"""shotty manages snapshots"""
+
+@cli.group('snapshots')
+def snapshots():
+	"""Commands for snapshots"""
+@snapshots.command('list')
+@click.option('--project', default=None,help="Only snapshots for project (tag Project: <name>)")
+def list_snapshots(project):
+	"List EC2 snapshots"
+	
+	instances= filter_instances(project)
+	for i in instances:
+		for v in i.volumes.all():
+			for s in v.snapshotsa.all():
+				print(", ".join((
+					s.id,
+					v.id,
+					i.id,
+					s.state,
+					s.progress,
+					s.start_time.strftime("%c")
+					)))
+
+
+@cli.group('volumes')
+def volumes():
+	"""commands for volumes"""
+
+@volumes.command('list')
+@click.option('--project', default=None,help="Only volumes for project (tag Project: <name>)")
+def list_volumes(project):
+	"List EC2 volumes"
+	
+	instances= filter_instances(project)
+
+	for i in instances:
+		for v in i.volumes.all():
+			print(", ".join((
+		    	v.id,
+		    	i.id,
+		    	v.state,
+		    	str(v.size)+"Gib",
+		    	v.encrypted and "Encrypted" or "Not Encrypted"
+		    	)))
+	return
+
+@cli.group()
 def instances():
 	"""Commands for instances"""
 
@@ -64,4 +112,4 @@ def start_instances(project):
 
 
 if __name__=="__main__":
-	instances()
+	cli()
